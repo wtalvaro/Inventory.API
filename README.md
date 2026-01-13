@@ -1,7 +1,5 @@
 # RetailPro - AI Sales Assistant
 
-![RetailPro Banner](https://via.placeholder.com/1200x400/2563eb/ffffff?text=RETAILPRO+AI+SALES+ASSISTANT)
-
 ## 📋 Visão Geral
 
 O **RetailPro** é um sistema inteligente de assistência a vendas desenvolvido para o setor varejista, combinando inteligência artificial com uma interface moderna para otimizar o processo de vendas e aumentar a performance dos vendedores.
