@@ -1,5 +1,8 @@
 # RetailPro - AI Sales Assistant
-
+![.NET](https://img.shields.io/badge/.NET-10.0-purple)
+![ASP.NET Core](https://img.shields.io/badge/ASP.NET_Core-10.0-blue)
+![License](https://img.shields.io/badge/License-MIT-green)
+![Status](https://img.shields.io/badge/Status-Em_Desenvolvimento-yellow)
 ## 📋 Visão Geral
 
 O **RetailPro** é um sistema inteligente de assistência a vendas desenvolvido para o setor varejista, combinando inteligência artificial com uma interface moderna para otimizar o processo de vendas e aumentar a performance dos vendedores.
