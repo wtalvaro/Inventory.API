@@ -1,0 +1,184 @@
+@page
+@model Inventory.API.Pages.IndexModel
+@using Microsoft.AspNetCore.Authentication
+@functions {
+    @functions {
+        public double GetRemainingSeconds()
+        {
+            // 1. Criamos uma variável local protegida.
+            // Se User ou Identity forem nulos, 'identity' será nula.
+            var identity = User?.Identity;
+
+            // 2. Verificamos a nulidade da variável local e a autenticação.
+            // O compilador aceita isso como prova de segurança.
+            if (identity == null || !identity.IsAuthenticated) return 0;
+
+            // 3. Para o restante, usamos o GetResult() para evitar Task pendente
+            var authTask = HttpContext.AuthenticateAsync();
+            var authProps = authTask.GetAwaiter().GetResult()?.Properties;
+            var expiresUtc = authProps?.ExpiresUtc;
+
+            if (expiresUtc.HasValue)
+            {
+                var remaining = expiresUtc.Value - DateTimeOffset.UtcNow;
+                return Math.Max(0, remaining.TotalSeconds);
+            }
+
+            return 7200;
+        }
+    }
+}
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "RetailPro - Dashboard";
+    var isAuthenticated = User.Identity?.IsAuthenticated ?? false;
+    var userRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+}
+
+<div id="loading-overlay">
+    <i class="fas fa-spinner fa-spin text-3xl text-blue-600"></i>
+</div>
+
+@if (!isAuthenticated)
+{
+    <div id="auth-screen" class="min-h-screen flex items-center justify-center bg-gray-100">
+        <div class="bg-white p-8 rounded-xl shadow-lg w-96 border border-gray-200">
+            <h1 class="text-2xl font-bold text-center text-blue-800 mb-6 italic">RETAIL<span
+                    class="text-gray-800">PRO</span></h1>
+
+            <div asp-validation-summary="ModelOnly" class="text-red-500 text-sm mb-4 text-center font-medium"></div>
+
+            <form method="post" asp-page-handler="Login">
+                <div class="mb-4 text-left">
+                    <label class="text-xs font-bold text-gray-600 uppercase">Usuário</label>
+                    <input type="text" name="username" required
+                        class="w-full p-2 border rounded mt-1 focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div class="mb-6 text-left">
+                    <label class="text-xs font-bold text-gray-600 uppercase">Senha</label>
+                    <input type="password" name="password" required
+                        class="w-full p-2 border rounded mt-1 focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <button type="submit"
+                    class="w-full bg-blue-600 text-white py-2 rounded-lg font-bold hover:bg-blue-700 transition-all active:scale-95">
+                    Entrar
+                </button>
+            </form>
+        </div>
+    </div>
+}
+else
+{
+    <div id="main-app" class="min-h-screen flex flex-col">
+        <header class="bg-blue-800 text-white p-4 shadow-lg flex justify-between items-center">
+            <span class="font-bold text-xl">RetailPro Dashboard</span>
+
+            <div id="session-clock"
+                class="bg-blue-900 px-3 py-1 rounded border border-blue-700 font-mono text-sm text-blue-200">
+                <i class="fas fa-clock mr-2 text-xs"></i>
+                <span id="session-timer-display">00:00:00</span>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <span class="bg-blue-600 px-3 py-1 rounded-full text-xs font-bold uppercase">@userRole</span>
+                <button onclick="logout()" class="text-sm underline hover:text-blue-200">Sair</button>
+            </div>
+        </header>
+
+        <div class="flex flex-1 overflow-hidden">
+            <nav class="w-64 bg-white shadow-md flex flex-col p-4 gap-2">
+                <button onclick="showSection('inventory')"
+                    class="p-3 text-left hover:bg-blue-50 rounded flex items-center gap-2 transition-colors">
+                    <i class="fas fa-boxes text-blue-600"></i> Inventário
+                </button>
+                <button onclick="showSection('coach')"
+                    class="p-3 text-left hover:bg-blue-50 rounded flex items-center gap-2 transition-colors">
+                    <i class="fas fa-magic text-purple-600"></i> Coach de Vendas
+                </button>
+
+                @if (userRole == "Coordenador")
+                {
+                    <button onclick="showSection('telemetry')"
+                        class="p-3 text-left hover:bg-blue-50 rounded flex items-center gap-2 transition-colors">
+                        <i class="fas fa-chart-line text-green-600"></i> Telemetria (Admin)
+                    </button>
+                }
+            </nav>
+
+            <main class="flex-1 p-6 overflow-y-auto bg-gray-50">
+                <section id="sec-inventory" class="animate-fade-in">
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-800">Estoque da Unidade</h2>
+                            @if (User.IsInRole("Coordenador"))
+                            {
+                                <div class="mt-2 flex items-center gap-2 bg-blue-50 p-2 rounded-lg border border-blue-100">
+                                    <label class="text-xs font-bold text-blue-800 uppercase">Filtrar Unidade:</label>
+                                    <select id="store-filter" onchange="loadInventory()"
+                                        class="text-sm border rounded p-1 bg-white outline-none">
+                                        <option value="0">🌍 Todas as Lojas (Global)</option>
+                                        @foreach (var storeItem in Model.Stores)
+                                        {
+                                            <option value="@storeItem.StoreId">
+                                                🏪 @(storeItem.Store?.Name ?? $"Unidade {storeItem.StoreId}")
+                                            </option>
+                                        }
+                                    </select>
+                                </div>
+                            }
+                        </div>
+                        <button onclick="loadInventory()"
+                            class="bg-white border p-2 rounded shadow-sm hover:bg-gray-100 text-gray-600 transition-all">
+                            <i class="fas fa-sync"></i>
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-50 border-b">
+                                <tr class="text-gray-600 text-xs uppercase tracking-wider">
+                                    <th class="p-4 font-bold">Loja</th>
+                                    <th class="p-4 font-bold">Produto</th>
+                                    <th class="p-4 font-bold">SKU</th>
+                                    <th class="p-4 font-bold text-center">Qtd</th>
+                                    <th class="p-4 font-bold text-center">Preço</th>
+                                    <th class="p-4 font-bold text-center">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventory-table-body"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="sec-coach" class="hidden">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Coach de Vendas Inteligente</h2>
+                    <div class="p-10 bg-white rounded-xl border-2 border-dashed border-gray-200 text-center text-gray-400">
+                        Selecione um produto no inventário para receber dicas de abordagem.
+                    </div>
+                </section>
+
+                @if (userRole == "Coordenador")
+                {
+                    <section id="sec-telemetry" class="hidden">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-6">Telemetria de Rede</h2>
+                        <div id="telemetry-grid" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+                    </section>
+                }
+            </main>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        const ServerState = {
+            // O ?. verifica se Identity existe. Se não, retorna falso.
+            isAuthenticated: @(User.Identity?.IsAuthenticated == true ? "true" : "false"),
+            role: "@(User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "")",
+            storeId: "@(User.FindFirst("StoreId")?.Value ?? "0")",
+            sessionDurationSeconds: @Math.Floor(GetRemainingSeconds()),
+            alertAtSeconds: 600 // Defina aqui (600 = 10min) para o JS obedecer
+        };
+    </script>
+    <script src="~/js/app.js" asp-append-version="true"></script>
+}

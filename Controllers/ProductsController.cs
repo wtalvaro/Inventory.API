@@ -1,254 +1,77 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Inventory.API.Data;
 using Inventory.API.Models;
-using System.Text;
+using Inventory.API.Services.Interfaces;
 
 namespace Inventory.API.Controllers;
 
-/// <summary>
-/// Controlador responsável pela gestão de produtos, simulação de hardware (LED) e inteligência de estoque.
-/// </summary>
 [ApiController]
 [Route("api/[controller]")]
 public class ProductsController : ControllerBase
 {
-    private readonly InventoryDbContext _context;
+    private readonly IProductService _productService;
 
-    public ProductsController(InventoryDbContext context)
+    // Injeção de Dependência: O Controller recebe o serviço pronto para uso
+    public ProductsController(IProductService productService)
     {
-        _context = context;
+        _productService = productService;
     }
 
-    #region Consultas e Inteligência
-
-    /// <summary>
-    /// Lista todos os produtos cadastrados no sistema.
-    /// </summary>
-    /// <returns>Uma lista de objetos do tipo Product.</returns>
+    // 1. LISTAGEM COM FILTROS AVANÇADOS
+    // GET: api/Products?category=Vestuário&gender=Masculino
     [HttpGet]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
+    public async Task<ActionResult<IEnumerable<Product>>> GetAll(
+        [FromQuery] string? category,
+        [FromQuery] string? subCategory,
+        [FromQuery] string? gender,
+        [FromQuery] string? targetAudience)
     {
-        return await _context.Products.ToListAsync();
+        var products = await _productService.GetAllAsync(category, subCategory, gender, targetAudience);
+        return Ok(products);
     }
 
-    /// <summary>
-    /// Busca um produto pelo SKU, aciona o LED e retorna inteligência de vendas (sugestões e dicas).
-    /// </summary>
-    [HttpGet("sku/{sku}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult> GetBySku(string sku)
+    // 2. BUSCA POR ID
+    // GET: api/Products/5
+    [HttpGet("{id}")]
+    public async Task<ActionResult<Product>> GetById(int id)
     {
-        var product = await _context.Products
-            .FirstOrDefaultAsync(p => p.SKU.ToLower() == sku.ToLower());
+        var product = await _productService.GetByIdAsync(id);
+        if (product == null) return NotFound(new { message = "Produto não encontrado." });
 
-        if (product == null) return NotFound("Produto não localizado.");
-
-        // --- CORREÇÃO AQUI: Definindo a variável timeline ---
-        // Se o SalesTimeline for nulo, retornamos uma lista vazia para não quebrar o front
-        var timeline = product.SalesTimeline ?? new List<SalesStep>();
-
-        // Busca sugestões (Cross-Sell) incluindo a nova coluna CrossSellAdvantage
-        var suggestions = await _context.Products
-            .Where(p => product.RelatedSkus.Contains(p.SKU))
-            .Select(s => new
-            {
-                s.SKU,
-                s.Name,
-                s.Price,
-                s.Quantity,
-                s.Category,
-                // Certifique-se de que essa coluna já foi criada no banco/model
-                CrossSellAdvantage = s.CrossSellAdvantage
-            })
-            .ToListAsync();
-
-        return Ok(new
-        {
-            Details = product,
-            Suggestions = suggestions,
-            Timeline = timeline // Agora a variável existe!
-        });
+        return Ok(product);
     }
 
-    /// <summary>
-    /// Retorna o ranking dos 5 produtos mais buscados (maior incidência de acionamento de LED).
-    /// </summary>
-    [HttpGet("stats/top-searched")]
-    public async Task<IActionResult> GetTopSearched()
-    {
-        var stats = await _context.InventoryLogs
-            .GroupBy(l => l.ProductName)
-            .Select(g => new { Name = g.Key, TotalSearches = g.Count() })
-            .OrderByDescending(x => x.TotalSearches)
-            .Take(5)
-            .ToListAsync();
-
-        return Ok(stats);
-    }
-
-    /// <summary>
-    /// Busca todas as variantes (tamanhos/cores) de um modelo de produto pelo nome.
-    /// Útil para exibir uma grade de tamanhos no Dashboard.
-    /// </summary>
-    [HttpGet("model/{name}")]
-    public async Task<IActionResult> GetModelDetails(string name)
-    {
-        var variants = await _context.Products
-            .Where(p => p.Name.ToLower().Contains(name.ToLower()))
-            .ToListAsync();
-
-        if (!variants.Any()) return NotFound("Nenhum modelo encontrado com este nome.");
-
-        var modelView = new
-        {
-            Name = variants.First().Name,
-            Category = variants.First().Category,
-            BasePrice = variants.First().Price,
-            Aisle = variants.First().Aisle,
-            Shelf = variants.First().Shelf, // ADICIONE ESTA LINHA AQUI
-            AvailableSizes = variants.Select(v => new
-            {
-                v.SKU,
-                v.Quantity,
-                Tamanho = v.Specifications.ContainsKey("Tamanho") ? v.Specifications["Tamanho"] : "N/A",
-                v.LedPin,
-                v.Shelf // Adicionado aqui também caso mude por tamanho
-            }).OrderBy(v => v.Tamanho).ToList()
-        };
-
-        return Ok(modelView);
-    }
-
-    #endregion
-
-    #region Operações de Estoque
-
-    /// <summary>
-    /// Cadastra um novo produto no inventário.
-    /// </summary>
+    // 3. CRIAÇÃO DE PRODUTO
+    // POST: api/Products
     [HttpPost]
-    public async Task<ActionResult<Product>> PostProduct(Product product)
+    public async Task<ActionResult<Product>> Create(Product product)
     {
-        _context.Products.Add(product);
-        await _context.SaveChangesAsync();
-        return CreatedAtAction(nameof(GetBySku), new { sku = product.SKU }, product);
+        var created = await _productService.CreateAsync(product);
+
+        // Retorna o status 201 (Created) e o link para ver o item criado
+        return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
 
-    /// <summary>
-    /// Realiza a baixa de X unidades no estoque por venda.
-    /// </summary>
-    [HttpPatch("sell/{sku}")]
-    public async Task<IActionResult> SellProduct(string sku, [FromQuery] int quantity = 1)
+    // 4. ATUALIZAÇÃO COMPLETA
+    // PUT: api/Products/5
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(int id, Product product)
     {
-        var product = await _context.Products
-            .FirstOrDefaultAsync(p => p.SKU.ToLower() == sku.ToLower());
+        var success = await _productService.UpdateAsync(id, product);
 
-        if (product == null) return NotFound("Produto não cadastrado.");
+        if (!success) return BadRequest(new { message = "Não foi possível atualizar o produto. Verifique o ID." });
 
-        // Validação de estoque para a quantidade solicitada
-        if (product.Quantity < quantity)
-            return BadRequest($"Estoque insuficiente! Disponível: {product.Quantity}");
-
-        // Abate o total de uma só vez (Operação Atômica)
-        product.Quantity -= quantity;
-
-        await _context.SaveChangesAsync();
-
-        return Ok(new
-        {
-            message = "Venda realizada!",
-            novoEstoque = product.Quantity,
-            sku = product.SKU
-        });
+        return NoContent(); // Status 204: Sucesso, mas sem conteúdo no corpo
     }
 
-    /// <summary>
-    /// Reabastece o estoque de um produto com uma quantidade específica.
-    /// </summary>
-    [HttpPatch("restock/{sku}")]
-    public async Task<IActionResult> RestockProduct(string sku, [FromQuery] int quantity)
+    // 5. EXCLUSÃO
+    // DELETE: api/Products/5
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(int id)
     {
-        if (quantity <= 0) return BadRequest("A quantidade deve ser maior que zero.");
+        var success = await _productService.DeleteAsync(id);
 
-        var product = await _context.Products
-            .FirstOrDefaultAsync(p => p.SKU.ToLower() == sku.ToLower());
+        if (!success) return NotFound(new { message = "Produto não encontrado para exclusão." });
 
-        if (product == null) return NotFound("Produto não encontrado.");
-
-        product.Quantity += quantity;
-        await _context.SaveChangesAsync();
-
-        return Ok(new { message = "Estoque reabastecido!", novoEstoque = product.Quantity });
+        return NoContent();
     }
-
-    #endregion
-
-    #region Configurações e Exportação
-
-    /// <summary>
-    /// Atualiza o tempo de duração que o LED permanecerá aceso para um SKU específico.
-    /// </summary>
-    [HttpPut("config-led/{sku}")]
-    public async Task<IActionResult> UpdateLedConfig(string sku, [FromQuery] int seconds)
-    {
-        var product = await _context.Products
-            .FirstOrDefaultAsync(p => p.SKU.ToLower() == sku.ToLower());
-
-        if (product == null) return NotFound();
-
-        product.LedDurationSeconds = seconds;
-        await _context.SaveChangesAsync();
-
-        return Ok(new { message = $"Tempo configurado para {seconds}s" });
-    }
-
-    /// <summary>
-    /// Gera e exporta um arquivo CSV com o estado atual de todo o inventário.
-    /// </summary>
-    [HttpGet("export/inventory")]
-    public async Task<IActionResult> ExportInventory()
-    {
-        var products = await _context.Products.ToListAsync();
-        var csv = new StringBuilder();
-        csv.AppendLine("SKU;Nome;Quantidade;Corredor;Prateleira;Pino LED");
-
-        foreach (var p in products)
-        {
-            csv.AppendLine($"{p.SKU};{p.Name};{p.Quantity};{p.Aisle};{p.Shelf};{p.LedPin}");
-        }
-
-        var buffer = Encoding.UTF8.GetBytes(csv.ToString());
-        string fileName = $"Inventario_{DateTime.Now:yyyyMMdd_HHmm}.csv";
-
-        return File(buffer, "text/csv", fileName);
-    }
-
-    /// <summary>
-    /// Atualiza o roteiro (timeline) de vendas de um produto específico.
-    /// </summary>
-    [HttpPut("update-timeline/{sku}")]
-    public async Task<IActionResult> UpdateTimeline(string sku, [FromBody] List<SalesStep> newTimeline)
-    {
-        var product = await _context.Products
-            .FirstOrDefaultAsync(p => p.SKU.ToLower() == sku.ToLower());
-
-        if (product == null)
-            return NotFound("Produto não encontrado para atualizar o roteiro.");
-
-        // Atualiza a lista de passos no banco (PostgreSQL tratará como JSONB)
-        product.SalesTimeline = newTimeline;
-
-        await _context.SaveChangesAsync();
-
-        return Ok(new
-        {
-            message = $"Roteiro de vendas do produto {product.Name} atualizado com sucesso!",
-            stepsCount = newTimeline.Count
-        });
-    }
-
-    #endregion
 }

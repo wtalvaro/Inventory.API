@@ -1,50 +1,54 @@
-using Inventory.API.Data;
-using Microsoft.EntityFrameworkCore;
+using Inventory.API.Extensions;
 using Scalar.AspNetCore;
-using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Altere de "DefaultConnection" para "InventoryDb"
-var connectionString = builder.Configuration.GetConnectionString("InventoryDb");
+// --- 1. CONFIGURAÇÃO DE SERVIÇOS ---
 
-if (string.IsNullOrEmpty(connectionString))
-{
-    throw new Exception("ERRO: A ConnectionString 'InventoryDb' não foi encontrada!");
-}
+// Configura Infraestrutura: DB, CORS, NewtonsoftJson e Injeção dos Services (IInventoryService, etc)
+builder.Services.AddInfrastructureConfig(builder.Configuration);
 
-var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
-dataSourceBuilder.EnableDynamicJson();
-var dataSource = dataSourceBuilder.Build();
+// Configura Identidade: Cookies (Padrão para Razor) + JWT (API) e Políticas de Acesso
+builder.Services.AddIdentityConfig(builder.Configuration);
 
-builder.Services.AddDbContext<InventoryDbContext>(options =>
-    options.UseNpgsql(dataSource));
-
-builder.Services.AddControllers();
+// Documentação da API
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddOpenApi(); // Registro do serviço (Correto)
+builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
-// AJUSTE AQUI: No app.Environment, você MAPEA a rota, não registra o serviço.
-// Configura o Scalar para ler o JSON gerado acima
+// --- 2. PIPELINE DE EXECUÇÃO (Middlewares) ---
+
+// Inicializa o banco de dados (Migrations + Seeders)
+await app.InitDatabaseAsync();
+
 if (app.Environment.IsDevelopment())
 {
-    // 1. GERA o endpoint do arquivo JSON (obrigatório)
     app.MapOpenApi();
-
-    // 2. CRIA a interface visual que lê esse JSON
     app.MapScalarApiReference(options =>
     {
-        options.WithTitle("Estoque API - Varejo")
-               .WithTheme(ScalarTheme.Moon)
-               .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient);
+        options.WithTitle("RetailPro API").WithTheme(ScalarTheme.Moon);
     });
 }
 
+// Arquivos Estáticos: Essencial para carregar o seu app.js e app.css da wwwroot
+app.UseStaticFiles();
+
+app.UseRouting();
+
+// CORS deve vir antes da Autenticação se o JS for consumir de origens diferentes
+app.UseCors();
+
+// ORDEM VITAL: Quem é o usuário? -> O que ele pode fazer?
+app.UseAuthentication();
 app.UseAuthorization();
+
+// --- 3. MAPEAMENTO DE ROTAS ---
+
+// Prioridade: Razor Pages (Sua Interface Principal e Gestão de Estado)
+app.MapRazorPages();
+
+// API: Endpoints para o Fetch do JavaScript (Dinamismo da Página)
 app.MapControllers();
-app.UseDefaultFiles(); // Procura por index.html automaticamente
-app.UseStaticFiles();  // Permite acessar arquivos na pasta wwwroot
 
 app.Run();
