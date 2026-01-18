@@ -28,9 +28,7 @@ public class Product
     [Column(TypeName = "jsonb")]
     public Dictionary<string, string> CrossSellAdvantages { get; set; } = new();
 
-    [Column(TypeName = "jsonb")]
-    public List<SalesStep>? SalesTimeline { get; set; } = new();
-
+    public virtual ICollection<SalesStep> SalesTimeline { get; set; } = new List<SalesStep>();
     public string[] RelatedSkus { get; set; } = Array.Empty<string>();
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

@@ -1,0 +1,81 @@
+@using System.Security.Claims
+@{
+    var userRole = User.FindFirst(ClaimTypes.Role)?.Value ?? "";
+}
+
+<section id="sec-coach" class="hidden animate-fade-in">
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                <i class="fas fa-magic text-purple-600"></i>
+                Coach de Vendas Inteligente
+            </h2>
+            <p class="text-sm text-gray-500">Orientações em tempo real para maximizar sua conversão.</p>
+        </div>
+
+        <div id="coach-status"
+            class="flex items-center gap-2 px-3 py-1 rounded-full bg-gray-100 text-[10px] font-black uppercase tracking-wider text-gray-500">
+            <span class="relative flex h-2 w-2">
+                <span
+                    class="animate-ping absolute inline-flex h-full w-full rounded-full bg-gray-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-gray-500"></span>
+            </span>
+            Aguardando Produto
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 space-y-4">
+            <div id="coach-display-container"
+                class="min-h-[300px] bg-white rounded-3xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center p-8 transition-all">
+
+                <div id="coach-placeholder">
+                    <div class="w-20 h-20 bg-purple-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-comment-dots text-purple-300 text-2xl"></i>
+                    </div>
+                    <p class="text-gray-400 font-medium">Selecione um produto no inventário para iniciar o roteiro de
+                        abordagem.</p>
+                </div>
+
+                <div id="active-step-display" class="hidden w-full text-center">
+                    <div id="step-badge"
+                        class="inline-block px-3 py-1 rounded-md text-[10px] font-black uppercase mb-4"></div>
+                    <h3 id="step-message" class="text-2xl md:text-3xl font-extrabold text-gray-800 leading-tight mb-6">
+                    </h3>
+                    <div class="flex justify-center gap-2">
+                        <span class="h-1.5 w-8 rounded-full bg-purple-600"></span>
+                        <span class="h-1.5 w-8 rounded-full bg-gray-200"></span>
+                        <span class="h-1.5 w-8 rounded-full bg-gray-200"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="coach-suggestions"
+                class="hidden bg-purple-900 rounded-2xl p-6 text-white shadow-xl shadow-purple-200">
+                <h4 class="text-xs font-black uppercase tracking-widest text-purple-300 mb-3">Sugestão de Cross-Sell
+                </h4>
+                <div class="flex items-center justify-between">
+                    <p id="suggestion-text" class="font-medium text-lg italic">"Aproveite e ofereça o meião oficial que
+                        combina com esta peça."</p>
+                    <i class="fas fa-plus-circle text-2xl text-purple-400"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="space-y-4">
+            <div class="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm">
+                <h4 class="text-xs font-black text-gray-400 uppercase mb-4 tracking-widest">Tempo de Abordagem</h4>
+                <div class="text-4xl font-mono font-black text-gray-800 mb-2" id="coach-timer">00:00</div>
+                <div class="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                    <div id="coach-progress" class="bg-purple-600 h-full w-0 transition-all duration-1000"></div>
+                </div>
+            </div>
+
+            <div id="coach-product-info" class="hidden bg-white rounded-2xl p-5 border border-gray-200 shadow-sm">
+                <h4 class="text-xs font-black text-gray-400 uppercase mb-3 tracking-widest">Produto em Foco</h4>
+                <p id="focused-product-name" class="font-bold text-gray-800 mb-1"></p>
+                <p id="focused-product-sku" class="text-xs text-gray-500 font-mono"></p>
+            </div>
+        </div>
+    </div>
+</section>

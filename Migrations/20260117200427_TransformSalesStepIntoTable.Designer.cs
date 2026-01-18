@@ -3,6 +3,7 @@ using System;
 using Inventory.API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Inventory.API.Migrations
 {
     [DbContext(typeof(InventoryDbContext))]
-    partial class InventoryDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260117200427_TransformSalesStepIntoTable")]
+    partial class TransformSalesStepIntoTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -180,17 +183,11 @@ namespace Inventory.API.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Category")
-                        .HasColumnType("text");
-
-                    b.Property<bool>("IsGlobal")
-                        .HasColumnType("boolean");
-
                     b.Property<string>("Message")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int?>("ProductId")
+                    b.Property<int>("ProductId")
                         .HasColumnType("integer");
 
                     b.Property<int>("Second")
@@ -200,12 +197,6 @@ namespace Inventory.API.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("Category")
-                        .HasFilter("\"Category\" IS NOT NULL");
-
-                    b.HasIndex("IsGlobal")
-                        .HasFilter("\"IsGlobal\" = TRUE");
 
                     b.HasIndex("ProductId");
 
@@ -355,7 +346,8 @@ namespace Inventory.API.Migrations
                     b.HasOne("Inventory.API.Models.Product", "Product")
                         .WithMany("SalesTimeline")
                         .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Product");
                 });

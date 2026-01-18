@@ -34,6 +34,26 @@ build_property.EnableCodeStyleSeverity =
 build_metadata.AdditionalFiles.TargetPath = UGFnZXMvSW5kZXguY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
+[/home/wtalvaro/Downloads/Containers/arch-home/Projetos/dotnet/Inventory.API/Pages/Shared/Components/_Header.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvU2hhcmVkL0NvbXBvbmVudHMvX0hlYWRlci5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/home/wtalvaro/Downloads/Containers/arch-home/Projetos/dotnet/Inventory.API/Pages/Shared/Components/_InventorySection.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvU2hhcmVkL0NvbXBvbmVudHMvX0ludmVudG9yeVNlY3Rpb24uY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/home/wtalvaro/Downloads/Containers/arch-home/Projetos/dotnet/Inventory.API/Pages/Shared/Components/_SalesCoachSection.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvU2hhcmVkL0NvbXBvbmVudHMvX1NhbGVzQ29hY2hTZWN0aW9uLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/home/wtalvaro/Downloads/Containers/arch-home/Projetos/dotnet/Inventory.API/Pages/Shared/Components/_Sidebar.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvU2hhcmVkL0NvbXBvbmVudHMvX1NpZGViYXIuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[/home/wtalvaro/Downloads/Containers/arch-home/Projetos/dotnet/Inventory.API/Pages/Shared/Components/_TelemetrySection.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvU2hhcmVkL0NvbXBvbmVudHMvX1RlbGVtZXRyeVNlY3Rpb24uY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
 [/home/wtalvaro/Downloads/Containers/arch-home/Projetos/dotnet/Inventory.API/Pages/Shared/_Layout.cshtml]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXMvU2hhcmVkL19MYXlvdXQuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 

@@ -46,4 +46,40 @@ public static class DbSeeder
         await context.Users.AddRangeAsync(testUsers);
         await context.SaveChangesAsync();
     }
+
+    public static void SeedSalesSteps(InventoryDbContext context)
+    {
+        if (context.SalesSteps.Any()) return; // Evita duplicar se já houver dados
+
+        context.SalesSteps.AddRange(
+            // 1. Passos Globais (Aparecem para todos)
+            new SalesStep
+            {
+                Second = 0,
+                IsGlobal = true,
+                Message = "Olá! Como posso ajudar você a encontrar o item perfeito hoje?",
+                Type = SalesStepType.Rapport
+            },
+
+            // 2. Passos por Categoria (Todas as Camisas)
+            new SalesStep
+            {
+                Second = 20,
+                Category = "Camisas",
+                Message = "Ofereça para provar e lembre de checar a disponibilidade de personalização.",
+                Type = SalesStepType.Sondagem
+            },
+
+            // 3. Passo Específico (Ex: Camisa do Flamengo ID 71)
+            new SalesStep
+            {
+                Second = 30,
+                ProductId = 71,
+                Message = "Destaque que esta é a tecnologia AEROREADY de jogo!",
+                Type = SalesStepType.Fechamento
+            }
+        );
+
+        context.SaveChanges();
+    }
 }

@@ -1,0 +1,57 @@
+@using System.Security.Claims
+@{
+    var userRole = User.FindFirst(ClaimTypes.Role)?.Value ?? "";
+}
+
+@if (userRole == "Coordenador")
+{
+    <section id="sec-telemetry" class="p-6 animate-fade-in">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                    <i class="fas fa-chart-line text-green-600"></i>
+                    Telemetria de Rede
+                </h2>
+                <p class="text-sm text-gray-500">Monitoramento global em tempo real.</p>
+            </div>
+
+            <div class="flex items-center gap-2 bg-white p-2 rounded-xl shadow-sm border border-gray-100">
+                <span class="text-[10px] font-black text-gray-400 uppercase px-2">Última Atualização:</span>
+                <span id="telemetry-last-update" class="text-xs font-mono font-bold text-green-600">--:--:--</span>
+                <button onclick="loadTelemetry()" class="ml-2 p-1.5 text-gray-400 hover:text-green-600 transition-colors">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
+                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Vendas Hoje (Rede)</p>
+                <h3 id="tel-total-sales" class="text-2xl font-black text-gray-800">R$ 0,00</h3>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
+                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Sessões Ativas</p>
+                <h3 id="tel-active-sessions" class="text-2xl font-black text-gray-800">0</h3>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
+                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Itens Sem Estoque</p>
+                <h3 id="tel-stock-out" class="text-2xl font-black text-red-600">0</h3>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
+                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Ticket Médio</p>
+                <h3 id="tel-avg-ticket" class="text-2xl font-black text-gray-800">R$ 0,00</h3>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden">
+            <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                <h4 class="font-bold text-gray-700">Status por Unidade</h4>
+            </div>
+            <div id="telemetry-grid" class="p-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            </div>
+        </div>
+    </section>
+}

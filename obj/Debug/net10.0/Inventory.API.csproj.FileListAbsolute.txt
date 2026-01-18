@@ -201,7 +201,6 @@
 /home/wtalvaro/Downloads/Containers/arch-home/Projetos/dotnet/Inventory.API/obj/Debug/net10.0/scopedcss/bundle/Inventory.API.styles.css
 /home/wtalvaro/Downloads/Containers/arch-home/Projetos/dotnet/Inventory.API/obj/Debug/net10.0/compressed/akxegrqsj8-{0}-g8rcmi1arg-g8rcmi1arg.gz
 /home/wtalvaro/Downloads/Containers/arch-home/Projetos/dotnet/Inventory.API/obj/Debug/net10.0/compressed/dvzxje7s6h-{0}-5ipweew5fc-5ipweew5fc.gz
-/home/wtalvaro/Downloads/Containers/arch-home/Projetos/dotnet/Inventory.API/obj/Debug/net10.0/compressed/8falop8siw-{0}-ca077we0lt-ca077we0lt.gz
 /home/wtalvaro/Downloads/Containers/arch-home/Projetos/dotnet/Inventory.API/obj/Debug/net10.0/staticwebassets.build.json
 /home/wtalvaro/Downloads/Containers/arch-home/Projetos/dotnet/Inventory.API/obj/Debug/net10.0/staticwebassets.build.json.cache
 /home/wtalvaro/Downloads/Containers/arch-home/Projetos/dotnet/Inventory.API/obj/Debug/net10.0/staticwebassets.development.json
@@ -213,3 +212,10 @@
 /home/wtalvaro/Downloads/Containers/arch-home/Projetos/dotnet/Inventory.API/obj/Debug/net10.0/Inventory.API.pdb
 /home/wtalvaro/Downloads/Containers/arch-home/Projetos/dotnet/Inventory.API/obj/Debug/net10.0/Inventory.API.genruntimeconfig.cache
 /home/wtalvaro/Downloads/Containers/arch-home/Projetos/dotnet/Inventory.API/obj/Debug/net10.0/ref/Inventory.API.dll
+/home/wtalvaro/Downloads/Containers/arch-home/Projetos/dotnet/Inventory.API/obj/Debug/net10.0/compressed/thz6bxy727-{0}-ppvix42ikv-ppvix42ikv.gz
+/home/wtalvaro/Downloads/Containers/arch-home/Projetos/dotnet/Inventory.API/obj/Debug/net10.0/compressed/814ysh3iv5-{0}-vp4szvylxa-vp4szvylxa.gz
+/home/wtalvaro/Downloads/Containers/arch-home/Projetos/dotnet/Inventory.API/obj/Debug/net10.0/compressed/lo5828n0t8-{0}-0hrb1ls1b5-0hrb1ls1b5.gz
+/home/wtalvaro/Downloads/Containers/arch-home/Projetos/dotnet/Inventory.API/obj/Debug/net10.0/compressed/8falop8siw-{0}-ybkx04hs6e-ybkx04hs6e.gz
+/home/wtalvaro/Downloads/Containers/arch-home/Projetos/dotnet/Inventory.API/obj/Debug/net10.0/compressed/7xcc92m4kh-{0}-vb8apzst3f-vb8apzst3f.gz
+/home/wtalvaro/Downloads/Containers/arch-home/Projetos/dotnet/Inventory.API/obj/Debug/net10.0/compressed/91tcw09hnc-{0}-j38wwn202i-j38wwn202i.gz
+/home/wtalvaro/Downloads/Containers/arch-home/Projetos/dotnet/Inventory.API/obj/Debug/net10.0/compressed/4b62q510rh-{0}-lqiqaot1jp-lqiqaot1jp.gz
