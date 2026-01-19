@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Inventory.API.Models.Enums;
 
 namespace Inventory.API.Models;
 

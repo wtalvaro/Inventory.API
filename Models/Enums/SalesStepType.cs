@@ -1,4 +1,4 @@
-namespace Inventory.API.Models;
+namespace Inventory.API.Models.Enums;
 
 public enum SalesStepType
 {

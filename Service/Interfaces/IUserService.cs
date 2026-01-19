@@ -1,4 +1,4 @@
-using Inventory.API.Dtos;
+using Inventory.API.Models.Dtos;
 
 namespace Inventory.API.Services.Interfaces;
 

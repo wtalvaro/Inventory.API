@@ -1,4 +1,4 @@
-namespace Inventory.API.Dtos;
+namespace Inventory.API.Models.Dtos;
 
 // DTO para Criação: Recebe a senha pura para ser processada
 public record UserCreateDto(

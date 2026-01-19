@@ -2,68 +2,58 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Inventory.API.Data;
-using Inventory.API.Dtos;
 using Inventory.API.Models;
 using Inventory.API.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using BCrypt.Net; // Garanta que instalou o pacote: dotnet add package BCrypt.Net-Next
 
 namespace Inventory.API.Services;
 
 public class AuthService : IAuthService
 {
     private readonly InventoryDbContext _context;
-    private readonly IConfiguration _configuration;
+    private readonly IConfiguration _config;
 
-    public AuthService(InventoryDbContext context, IConfiguration configuration)
+    public AuthService(InventoryDbContext context, IConfiguration config)
     {
         _context = context;
-        _configuration = configuration;
+        _config = config;
     }
 
-    public async Task<LoginResponse?> LoginAsync(LoginRequest request)
+    public async Task<User?> ValidateUserAsync(string username, string password)
     {
         var user = await _context.Users
-            .FirstOrDefaultAsync(u => u.Username == request.Username);
+            .FirstOrDefaultAsync(u => u.Username == username);
 
-        // Verificação básica de senha (em produção, use BCrypt)
-        if (user == null || user.PasswordHash != request.Password)
-        {
-            return null;
-        }
+        if (user == null) return null;
 
-        var token = GenerateJwtToken(user);
+        // Compara a senha digitada com o Hash do banco de dados
+        bool isValid = BCrypt.Net.BCrypt.Verify(password, user.PasswordHash);
 
-        // Retorna o StoreId (que pode ser null para o Coordenador)
-        return new LoginResponse(token, user.Username, user.Role, user.StoreId);
+        return isValid ? user : null;
     }
 
-    private string GenerateJwtToken(User user)
+    public string GenerateJwtToken(User user)
     {
-        var jwtKey = _configuration["Jwt:Key"] ?? throw new Exception("JWT Key missing");
-        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
-        var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+        var jwtKey = _config["Jwt:Key"] ?? "chave-secreta-muito-longa-e-segura";
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-        // 1. Criamos a lista de Claims de forma dinâmica
         var claims = new List<Claim>
         {
             new Claim(ClaimTypes.Name, user.Username),
-            new Claim(ClaimTypes.Role, user.Role),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            // IMPORTANTE: Convertemos o Enum Role para string para o sistema de autorização entender
+            new Claim(ClaimTypes.Role, user.Role.ToString()),
+            new Claim("StoreId", user.StoreId?.ToString() ?? "0")
         };
 
-        // 2. Lógica de StoreId Nulo (Acesso Global)
-        // Se o StoreId tiver valor, adicionamos a claim. 
-        // Se for null (Coordenador), mandamos "0" ou simplesmente não mandamos.
-        // O nosso SameStoreHandler já trata string vazia ou "0" como ACESSO TOTAL.
-        claims.Add(new Claim("StoreId", user.StoreId?.ToString() ?? "0"));
-
         var token = new JwtSecurityToken(
-            issuer: _configuration["Jwt:Issuer"] ?? "RetailProAPI",
-            audience: _configuration["Jwt:Audience"] ?? "RetailProFrontend",
             claims: claims,
-            expires: DateTime.Now.AddHours(8),
-            signingCredentials: credentials);
+            expires: DateTime.Now.AddHours(2),
+            signingCredentials: creds
+        );
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }

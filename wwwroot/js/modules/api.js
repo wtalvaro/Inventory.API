@@ -2,23 +2,39 @@
  * API.JS - Módulo de Comunicação Centralizado
  */
 export const Api = {
-    // 1. INVENTÁRIO
+    // 1. INVENTÁRIO (Alinhado com StoreInventoryController)
     async getInventory(storeId) {
         try {
-            const res = await fetch(`/api/inventory/store/${storeId}`);
+            // O Backend espera: /api/inventory/store/{storeId}
+            const res = await fetch(`/api/StoreInventory/catalog/${storeId}`);
+
             if (res.status === 401) return this.handleUnauthorized();
+
+            // SEGURANÇA: Se não for 200 OK, não tenta ler JSON
+            if (!res.ok) {
+                console.warn(`API retornou erro ${res.status} para a loja ${storeId}`);
+                return [];
+            }
+
             return await res.json();
         } catch (err) {
             console.error("Erro ao buscar inventário:", err);
-            throw err;
+            return [];
         }
     },
 
-    async updateStock(id, change) {
+    // Ajustado para usar o endpoint [HttpPut("item/{id}")] do seu Controller
+    async updateStock(id, currentQuantity, change) {
         try {
-            const res = await fetch(`/api/inventory/${id}/stock?change=${change}`, {
-                method: 'PATCH'
+            const newQuantity = currentQuantity + change;
+
+            // O seu Controller espera um objeto StoreInventory no Body
+            const res = await fetch(`/api/StoreInventory/${id}/adjust?quantity=${newQuantity}&reason=${encodeURIComponent(reason)}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ quantity: newQuantity })
             });
+
             if (res.status === 401) return this.handleUnauthorized();
             return res.ok;
         } catch (err) {
@@ -27,34 +43,22 @@ export const Api = {
         }
     },
 
-    // 2. COACH DE VENDAS
+    // 2. COACH DE VENDAS (Alinhado com SalesStepsController)
     async getSalesCoachTimeline(productId) {
         try {
+            // Ajustado para a rota correta do seu Controller
             const res = await fetch(`/api/SalesSteps/coach/${productId}`);
-            if (res.status === 401) return this.handleUnauthorized();
             if (!res.ok) return [];
             return await res.json();
         } catch (err) {
-            console.error("Erro ao buscar timeline do coach:", err);
             return [];
         }
     },
 
-    // 3. TELEMETRIA (Apenas Coordenadores)
+    // 3. TELEMETRIA (Mock de segurança para evitar erro 404 no console)
     async getTelemetryData() {
-        try {
-            const res = await fetch('/api/telemetry/dashboard');
-            if (res.status === 401) return this.handleUnauthorized();
-
-            if (!res.ok) {
-                // Se o backend não responder, usamos dados de teste (Mock)
-                return this.getMockTelemetryData();
-            }
-            return await res.json();
-        } catch (err) {
-            console.warn("API Offline, usando dados simulados.");
-            return this.getMockTelemetryData();
-        }
+        console.info("Telemetria: Endpoint desativado no JS. Usando dados locais.");
+        return this.getMockTelemetryData();
     },
 
     getMockTelemetryData() {
@@ -72,18 +76,21 @@ export const Api = {
         };
     },
 
-    // 4. AUTENTICAÇÃO
     async logout() {
         try {
+            // Chama o servidor para invalidar o cookie
             await fetch('/api/auth/logout', { method: 'POST' });
         } finally {
-            window.location.reload();
+            // Limpa estados locais se houver (localStorage, sessionStorage)
+            sessionStorage.clear();
+            localStorage.removeItem('RetailPro_LastUser');
+
+            // Redireciona e força um reload completo
+            window.location.replace('/');
         }
     },
 
-    // Helper para tratar expiração de sessão
     handleUnauthorized() {
-        console.warn("Sessão expirada. Redirecionando...");
-        window.location.reload();
+        window.location.href = '/';
     }
 };

@@ -4,79 +4,83 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Security.Claims;
 using Inventory.API.Services.Interfaces;
-using Inventory.API.Dtos;
-using Inventory.API.Models; // Necessário para StoreInventory
+using Inventory.API.Models;
 
 namespace Inventory.API.Pages
 {
     public class IndexModel : PageModel
     {
         private readonly IAuthService _authService;
-        private readonly IInventoryService _inventoryService;
+        private readonly IStoreInventoryService _inventoryService;
 
-        // Propriedade que o HTML (Index.cshtml) usará para montar o select das lojas
+        // Propriedade para montar o select de lojas (para Coordenadores)
         public IEnumerable<StoreInventory> Stores { get; set; } = new List<StoreInventory>();
 
-        public IndexModel(IAuthService authService, IInventoryService inventoryService)
+        public IndexModel(IAuthService authService, IStoreInventoryService inventoryService)
         {
             _authService = authService;
             _inventoryService = inventoryService;
         }
 
-        // --- 1. CARREGAMENTO DA PÁGINA (Ponto de entrada) ---
         public async Task OnGetAsync()
         {
-            // O 'is { IsAuthenticated: true }' verifica se identity não é nulo 
-            // E se a propriedade IsAuthenticated é verdadeira, tudo em um passo só.
+            // Se já estiver logado e for coordenador, carrega as lojas
             if (User?.Identity is { IsAuthenticated: true } && User.IsInRole("Coordenador"))
             {
                 var catalog = await _inventoryService.GetCatalogAsync(0);
-
                 if (catalog != null)
                 {
-                    Stores = catalog
-                        .GroupBy(x => x.StoreId)
-                        .Select(g => g.First())
-                        .ToList();
+                    Stores = catalog.GroupBy(x => x.StoreId).Select(g => g.First());
                 }
             }
         }
 
-        // --- 2. PROCESSAMENTO DO LOGIN (Envio do formulário) ---
-        public async Task<IActionResult> OnPostLoginAsync(string username, string password)
+        public async Task<IActionResult> OnPostAsync(string username, string password)
         {
-            // Criando a requisição usando o construtor do seu DTO
-            var loginRequest = new LoginRequest(username, password);
-            var response = await _authService.LoginAsync(loginRequest);
-
-            if (response == null)
+            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
             {
-                // Adiciona erro que será exibido no asp-validation-summary
+                ModelState.AddModelError(string.Empty, "Preencha todos os campos.");
+                return Page();
+            }
+
+            // 1. Chamada CORRIGIDA: ValidateUserAsync em vez de LoginAsync
+            // O retorno agora é o objeto 'User' ou 'null'
+            var user = await _authService.ValidateUserAsync(username, password);
+
+            if (user == null)
+            {
                 ModelState.AddModelError(string.Empty, "Usuário ou senha inválidos.");
                 return Page();
             }
 
-            // Criando as Claims que definem a identidade do usuário no sistema
+            // 2. Montagem das Claims CORRIGIDA:
+            // Usamos .ToString() no Role (Enum) para evitar o erro de BinaryReader
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.Name, username),
-                new Claim(ClaimTypes.Role, response.Role ?? "Vendedor"),
-                new Claim("StoreId", response.StoreId?.ToString() ?? "0")
+                new Claim(ClaimTypes.Name, user.Username),
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Role, user.Role.ToString()), // RESOLVE O ERRO CS1503
+                new Claim("StoreId", user.StoreId?.ToString() ?? "0")
             };
 
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
 
-            // Gerando o Cookie de Autenticação persistente (mantém logado ao fechar aba)
+            // 3. Efetua o Login via Cookie
             await HttpContext.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 new ClaimsPrincipal(claimsIdentity),
                 new AuthenticationProperties
                 {
-                    IsPersistent = true,
-                    ExpiresUtc = DateTimeOffset.UtcNow.AddHours(2)
+                    // 1. Torna o cookie volátil (memória RAM apenas)
+                    IsPersistent = false,
+
+                    // 2. Define um tempo máximo de vida, mesmo se o navegador estiver aberto
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(30),
+
+                    // 3. Permite que o tempo seja renovado se o usuário estiver ativo
+                    AllowRefresh = true
                 });
 
-            // Redireciona para o GET da própria página para carregar o Dashboard
             return RedirectToPage();
         }
     }

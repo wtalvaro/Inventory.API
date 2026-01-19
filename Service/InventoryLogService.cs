@@ -14,29 +14,40 @@ public class InventoryLogService : IInventoryLogService
         _context = context;
     }
 
-    public async Task<IEnumerable<InventoryLog>> GetAllLogsAsync(int limit = 100)
+    public async Task<IEnumerable<InventoryLog>> GetLogsAsync(int? storeId = null, int limit = 100)
     {
-        return await _context.InventoryLogs
-            .OrderByDescending(l => l.Timestamp)
+        var query = _context.InventoryLogs
+            .Include(l => l.Product)
+            .Include(l => l.Store)
+            .AsNoTracking();
+
+        if (storeId.HasValue)
+            query = query.Where(l => l.StoreId == storeId.Value);
+
+        return await query
+            .OrderByDescending(l => l.CreatedAt) // Corrigido: era Timestamp
             .Take(limit)
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<InventoryLog>> GetLogsBySkuAsync(string sku)
+    public async Task<IEnumerable<InventoryLog>> GetLogsByProductAsync(int productId)
     {
         return await _context.InventoryLogs
-            .Where(l => l.SKU == sku)
-            .OrderByDescending(l => l.Timestamp)
+            .Where(l => l.ProductId == productId)
+            .OrderByDescending(l => l.CreatedAt) // Corrigido
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<InventoryLog>> GetRecentLogsAsync(int days)
+    public async Task<IEnumerable<InventoryLog>> GetRecentLogsAsync(int days, int? storeId = null)
     {
         var dataLimite = DateTime.UtcNow.AddDays(-days);
+        var query = _context.InventoryLogs.Where(l => l.CreatedAt >= dataLimite); // Corrigido
 
-        return await _context.InventoryLogs
-            .Where(l => l.Timestamp >= dataLimite)
-            .OrderByDescending(l => l.Timestamp)
+        if (storeId.HasValue)
+            query = query.Where(l => l.StoreId == storeId.Value);
+
+        return await query
+            .OrderByDescending(l => l.CreatedAt)
             .ToListAsync();
     }
 }

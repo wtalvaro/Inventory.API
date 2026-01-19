@@ -1,4 +1,4 @@
-using Inventory.API.Dtos;
+using Inventory.API.Models.Dtos;
 using Inventory.API.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -17,48 +17,40 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Policy = "ApenasCoordenador")]
+    [Authorize(Policy = "ApenasCoordenador")] // Apenas Coordenadores/Admins vêem todos
     public async Task<ActionResult<IEnumerable<UserReadDto>>> GetUsers()
     {
-        var users = await _userService.GetAllAsync();
-        return Ok(users);
-    }
-
-    [HttpGet("{id}")]
-    [Authorize(Policy = "GerenteOuSuperior")]
-    public async Task<ActionResult<UserReadDto>> GetUser(int id)
-    {
-        var user = await _userService.GetByIdAsync(id);
-        if (user == null) return NotFound("Utilizador não encontrado.");
-
-        return Ok(user);
+        return Ok(await _userService.GetAllAsync());
     }
 
     [HttpPost]
     [Authorize(Policy = "ApenasCoordenador")]
-    public async Task<ActionResult<UserReadDto>> PostUser(UserCreateDto dto)
+    public async Task<ActionResult<UserReadDto>> Create(UserCreateDto dto)
     {
-        var response = await _userService.CreateAsync(dto);
-        return CreatedAtAction(nameof(GetUser), new { id = response.Id }, response);
+        try
+        {
+            var result = await _userService.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+        }
+        catch (ArgumentException)
+        {
+            return BadRequest("Role inválida fornecida.");
+        }
     }
 
-    [HttpPut("{id}")]
-    [Authorize(Policy = "ApenasCoordenador")]
-    public async Task<IActionResult> PutUser(int id, UserUpdateDto dto)
+    [HttpGet("{id}")]
+    [Authorize(Policy = "GerenteOuSuperior")]
+    public async Task<ActionResult<UserReadDto>> GetById(int id)
     {
-        var success = await _userService.UpdateAsync(id, dto);
-        if (!success) return NotFound();
-
-        return NoContent();
+        var user = await _userService.GetByIdAsync(id);
+        return user == null ? NotFound() : Ok(user);
     }
 
     [HttpDelete("{id}")]
     [Authorize(Policy = "ApenasCoordenador")]
-    public async Task<IActionResult> DeleteUser(int id)
+    public async Task<IActionResult> Delete(int id)
     {
         var success = await _userService.DeleteAsync(id);
-        if (!success) return NotFound();
-
-        return NoContent();
+        return success ? NoContent() : NotFound();
     }
 }

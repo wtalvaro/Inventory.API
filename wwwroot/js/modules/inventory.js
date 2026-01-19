@@ -49,11 +49,18 @@ export const Inventory = {
     },
 
     async handleUpdate(id, change) {
-        const success = await Api.updateStock(id, change);
+        // Busca o item atual na nossa lista local para saber a quantidade antes do ajuste
+        const item = this.currentItems.find(i => i.id === id);
+        if (!item) return;
+
+        const success = await Api.updateStock(id, item.quantity, change);
+
         if (success) {
-            await this.load();
+            // Atualiza a interface sem recarregar tudo (Performance)
+            item.quantity += change;
+            this.render();
         } else {
-            alert("Erro ao atualizar estoque.");
+            alert("Não foi possível atualizar o estoque. Verifique suas permissões.");
         }
     }
 };

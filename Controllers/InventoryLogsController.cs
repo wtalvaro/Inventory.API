@@ -1,11 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 using Inventory.API.Models;
 using Inventory.API.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Inventory.API.Controllers;
 
 [ApiController]
-[Route("api/logs")]
+[Route("api/[controller]")]
 public class InventoryLogsController : ControllerBase
 {
     private readonly IInventoryLogService _logService;
@@ -16,25 +17,17 @@ public class InventoryLogsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<InventoryLog>>> GetAll()
+    [Authorize(Policy = "GerenteOuSuperior")]
+    public async Task<IActionResult> GetAll([FromQuery] int? storeId)
     {
-        var logs = await _logService.GetAllLogsAsync();
+        var logs = await _logService.GetLogsAsync(storeId);
         return Ok(logs);
     }
 
-    [HttpGet("sku/{sku}")]
-    public async Task<ActionResult<IEnumerable<InventoryLog>>> GetBySku(string sku)
+    [HttpGet("product/{productId}")]
+    public async Task<IActionResult> GetByProduct(int productId)
     {
-        var logs = await _logService.GetLogsBySkuAsync(sku);
-        if (!logs.Any()) return NotFound($"Nenhum registro encontrado para o SKU: {sku}");
-
-        return Ok(logs);
-    }
-
-    [HttpGet("recent/{days}")]
-    public async Task<ActionResult<IEnumerable<InventoryLog>>> GetRecent(int days)
-    {
-        var logs = await _logService.GetRecentLogsAsync(days);
+        var logs = await _logService.GetLogsByProductAsync(productId);
         return Ok(logs);
     }
 }

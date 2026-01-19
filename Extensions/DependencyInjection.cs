@@ -44,13 +44,19 @@ public static class DependencyInjection
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IProductService, ProductService>();
         services.AddScoped<ICartService, CartService>();
-        services.AddScoped<IInventoryService, InventoryService>();
+        services.AddScoped<IStoreInventoryService, StoreInventoryService>();
         services.AddScoped<IInventoryLogService, InventoryLogService>();
         services.AddScoped<ISalesSessionService, SalesSessionService>();
         services.AddScoped<ISellerService, SellerService>();
         services.AddScoped<IStoreService, StoreService>();
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<ISalesStepService, SalesStepService>();
+        services.AddScoped<IPurchaseOrderService, PurchaseOrderService>();
+        services.AddScoped<IPurchaseOrderItemService, PurchaseOrderItemService>();
+        services.AddScoped<IStockBatchService, StockBatchService>();
+        services.AddScoped<ISupplierService, SupplierService>();
+        services.AddScoped<IStockTransferService, StockTransferService>();
+        services.AddScoped<IStockTransferItemService, StockTransferItemService>();
 
         return services;
     }
@@ -90,18 +96,42 @@ public static class DependencyInjection
         // Políticas de Autorização baseadas em Roles (o que o Razor e as APIs usarão)
         // Mantendo as suas políticas de autorização originais
         services.AddAuthorizationBuilder()
-            .AddPolicy("ApenasMinhaLoja", p => p.RequireRole("Gerente", "Coordenador").AddRequirements(new SameStoreRequirement()))
-            .AddPolicy("ApenasCoordenador", p => p.RequireRole("Coordenador"))
-            .AddPolicy("GerenteOuSuperior", p => p.RequireRole("Gerente", "Coordenador"))
-            .AddPolicy("VendedorOuSuperior", p => p.RequireRole("Vendedor", "Gerente", "Coordenador"));
-
+            .AddPolicy("ApenasMinhaLoja", p => p.RequireRole("Gerente", "Coordenador", "Administrador").AddRequirements(new SameStoreRequirement()))
+            .AddPolicy("ApenasCoordenador", p => p.RequireRole("Coordenador", "Administrador"))
+            .AddPolicy("GerenteOuSuperior", p => p.RequireRole("Gerente", "Coordenador", "Administrador"))
+            .AddPolicy("VendedorOuSuperior", p => p.RequireRole("Vendedor", "Estoquista", "Gerente", "Coordenador", "Administrador"));
         return services;
     }
+
+    // Local: Inventory.API/Extensions/DependencyInjection.cs
 
     public static async Task InitDatabaseAsync(this WebApplication app)
     {
         using var scope = app.Services.CreateScope();
-        var context = scope.ServiceProvider.GetRequiredService<InventoryDbContext>();
-        await context.Database.MigrateAsync();
+        var services = scope.ServiceProvider;
+
+        try
+        {
+            var context = services.GetRequiredService<InventoryDbContext>();
+
+            // 1. Aplica as migrações pendentes (Cria as tabelas se não existirem)
+            await context.Database.MigrateAsync();
+
+            // 2. Chama o Seeder para preencher os Usuários
+            // Como o SeedUsers é 'async Task', usamos await
+            await DbSeeder.SeedUsers(context);
+
+            // 3. Chama o Seeder para os Passos de Venda
+            // Como o SeedSalesSteps é 'void' (sincrono), chamamos direto
+            DbSeeder.SeedSalesSteps(context);
+
+            Console.WriteLine(">>> Banco de Dados inicializado e populado com sucesso!");
+        }
+        catch (Exception ex)
+        {
+            var logger = services.GetRequiredService<ILogger<Program>>();
+            logger.LogError(ex, "Erro ao inicializar o banco de dados.");
+            throw; // Repassa o erro para sabermos o que falhou no console
+        }
     }
 }

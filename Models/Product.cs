@@ -12,12 +12,15 @@ public class Product
     public string Name { get; set; } = string.Empty;
     public string Category { get; set; } = "Geral";
     public string SubCategory { get; set; } = string.Empty;
+
     // Segmentação de Mercado
     public string Gender { get; set; } = "Unissex";      // Masculino, Feminino, Unissex
     public string TargetAudience { get; set; } = "Adulto"; // Infantil, Juvenil, Adulto, Idoso
+
     // ESPECIFICAÇÕES GLOBAIS (JSONB) - Ex: Material, Garantia, Tecnologia
     [Column(TypeName = "jsonb")]
     public Dictionary<string, string> Specifications { get; set; } = new();
+
     // INTELIGÊNCIA DE VENDAS (JSONB)
     [Column(TypeName = "jsonb")]
     public Dictionary<string, string> SalesTips { get; set; } = new();

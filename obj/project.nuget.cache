@@ -1,9 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "SD/ZG7IsjY8=",
+  "dgSpecHash": "z8mcrI06NOM=",
   "success": true,
   "projectFilePath": "/home/wtalvaro/Downloads/Containers/arch-home/Projetos/dotnet/Inventory.API/Inventory.API.csproj",
   "expectedPackageFiles": [
+    "/home/wtalvaro/Downloads/Containers/arch-home/.nuget/packages/bcrypt.net-next/4.0.3/bcrypt.net-next.4.0.3.nupkg.sha512",
     "/home/wtalvaro/Downloads/Containers/arch-home/.nuget/packages/humanizer.core/2.14.1/humanizer.core.2.14.1.nupkg.sha512",
     "/home/wtalvaro/Downloads/Containers/arch-home/.nuget/packages/microsoft.aspnetcore.authentication.jwtbearer/10.0.2/microsoft.aspnetcore.authentication.jwtbearer.10.0.2.nupkg.sha512",
     "/home/wtalvaro/Downloads/Containers/arch-home/.nuget/packages/microsoft.aspnetcore.components.webassembly/10.0.2/microsoft.aspnetcore.components.webassembly.10.0.2.nupkg.sha512",
