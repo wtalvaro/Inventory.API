@@ -8,6 +8,17 @@
 
 </div>
 
+---
+
+## 💡 Visão de Engenharia e Contexto
+
+> **"Do Controle de Estados ao Controle de Processos"**
+> Este projeto foi concebido como um laboratório de engenharia de software para demonstrar maturidade técnica e lógica de sistemas. Embora o domínio seja o varejo, o RetailPro é uma prova de conceito sobre **precisão, resiliência e gestão de estados**.
+> Diante da ausência de ferramentas de hardware para prototipagem de microcontroladores no momento, apliquei a mesma disciplina exigida na automação industrial para resolver o problema crítico de inventário dinâmico. Se um sistema pode gerenciar com integridade total a complexidade de múltiplos SKUs e grades em tempo real, ele compartilha a mesma base lógica necessária para o controle de fluxos e processos industriais.
+> **O RetailPro prova que a capacidade de estruturar soluções complexas e entregar um produto finalizado é independente da stack, mas totalmente dependente da lógica de engenharia.**
+
+---
+
 ## ✨ A Nova Realidade Técnica
 
 O RetailPro evoluiu de um script de interface para um sistema **Enterprise-Ready**. A arquitetura atual utiliza o **Razor Pages** como "Cérebro" (Estado e Segurança) e **Vanilla JS** como "Músculo" (Interatividade).
@@ -47,6 +58,16 @@ Diferente de sistemas puramente front-end, o RetailPro implementa segurança no 
 
 ---
 
+## 🐧 Infraestrutura e Stack Linux
+
+O desenvolvimento e deploy do RetailPro foram validados em ambiente **Linux (AlmaLinux e Arch)**, demonstrando domínio em:
+
+* Configuração de ambientes estáveis para missão crítica.
+* Gerenciamento de containers e performance de sistema.
+* Automação de processos via CLI.
+
+---
+
 ## 📡 API Endpoints (Core)
 
 | Método | Endpoint | Descrição |
@@ -58,35 +79,26 @@ Diferente de sistemas puramente front-end, o RetailPro implementa segurança no 
 
 ---
 
-## 📁 Estrutura do Projeto Atualizada
+## 📁 Estrutura do Projeto
 
 ```
 📦 RetailPro
 ├── 📁 Inventory.API
-│   ├── 📁 Controllers       # APIs de estoque e autenticação
-│   ├── 📁 Pages             # Razor Pages (Index.cshtml + Login Logic)
-│   ├── 📁 Services          # Regras de negócio e IAuthService
-│   ├── 📁 Dtos              # Objetos de transferência (LoginRequest, etc)
-│   └── 📄 Program.cs        # Configuração de Auth, Cookies e DI
+│   ├── 📁 Controllers       # APIs de estoque e autenticação
+│   ├── 📁 Pages             # Razor Pages (Index.cshtml + Login Logic)
+│   ├── 📁 Services          # Regras de negócio e IAuthService
+│   ├── 📁 Dtos              # Objetos de transferência (LoginRequest, etc)
+│   └── 📄 Program.cs        # Configuração de Auth, Cookies e DI
 ├── 📁 wwwroot
-│   ├── 📁 js
-│   │   └── 📄 app.js        # O "Músculo" do Front-end
-│   └── 📁 css
-│       └── 📄 styles.css    # Tailwind e custom styles
+│   ├── 📁 js
+│   │   └── 📄 app.js        # O "Músculo" do Front-end
+│   └── 📁 css
+│       └── 📄 styles.css    # Tailwind e custom styles
 
 ```
 
 ---
 
-## 🚀 Como Executar
-
-1. **Configuração do Banco:** Certifique-se de que o PostgreSQL está rodando e a connection string no `appsettings.json` está correta.
-2. **Migrações:** Execute `dotnet ef database update`.
-3. **Execução:** `dotnet run`.
-4. **Acesso:** O sistema identificará automaticamente o estado de login e servirá a interface correta baseada no cargo do usuário.
-
----
-
-**Desenvolvido para máxima segurança e performance no varejo moderno.**
+**Desenvolvido para máxima segurança e performance sob uma ótica de engenharia robusta.**
 
 ---
