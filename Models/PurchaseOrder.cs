@@ -12,6 +12,9 @@ public class PurchaseOrder
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? ReceivedAt { get; set; }
     public OrderStatus Status { get; set; } = OrderStatus.Draft;
-    public decimal TotalCost { get; set; }
+    public decimal ServiceFee { get; set; } // Valor da taxa cobrada nesta ordem
+    public decimal TaxAmount { get; set; }  // Valor de impostos desta ordem
+    public decimal ShippingCost { get; set; }
+    public decimal TotalCost { get; set; } // Dica extra: O TotalCost agora será: Itens + ServiceFee + TaxAmount + ShippingCost
     public List<PurchaseOrderItem> Items { get; set; } = new();
 }

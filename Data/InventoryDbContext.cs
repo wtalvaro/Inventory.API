@@ -19,13 +19,9 @@ public class InventoryDbContext : DbContext
     public DbSet<StoreInventory> StoreInventories { get; set; } = null!;
     public DbSet<User> Users { get; set; } = null!;
     public DbSet<Seller> Sellers { get; set; } = null!;
-
-    // Tabelas de Vendas e Coach
     public DbSet<SalesSession> SalesSessions { get; set; } = null!;
     public DbSet<CartItem> CartItems { get; set; } = null!;
     public DbSet<SalesStep> SalesSteps { get; set; } = null!;
-
-    // Tabelas de Gestão de Estoque Profissional
     public DbSet<Supplier> Suppliers { get; set; } = null!;
     public DbSet<PurchaseOrder> PurchaseOrders { get; set; } = null!;
     public DbSet<PurchaseOrderItem> PurchaseOrdersItems { get; set; } = null!;
@@ -37,6 +33,33 @@ public class InventoryDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        #region Configuração de Schemas e Tabelas
+
+        // SCHEMA: Identity (Segurança e Pessoas)
+        modelBuilder.Entity<User>().ToTable("Users", "Identity");
+        modelBuilder.Entity<Seller>().ToTable("Sellers", "Identity");
+
+        // SCHEMA: Catalog (Produtos e Definições)
+        modelBuilder.Entity<Product>().ToTable("Products", "Catalog");
+        modelBuilder.Entity<Supplier>().ToTable("Suppliers", "Catalog");
+        modelBuilder.Entity<SalesStep>().ToTable("SalesSteps", "Catalog");
+
+        // SCHEMA: Inventory (WMS e Logística)
+        modelBuilder.Entity<Store>().ToTable("Stores", "Inventory");
+        modelBuilder.Entity<StoreInventory>().ToTable("StoreInventories", "Inventory");
+        modelBuilder.Entity<StockBatch>().ToTable("StockBatches", "Inventory");
+        modelBuilder.Entity<InventoryLog>().ToTable("InventoryLogs", "Inventory");
+        modelBuilder.Entity<StockTransfer>().ToTable("StockTransfers", "Inventory");
+        modelBuilder.Entity<StockTransferItem>().ToTable("StockTransferItems", "Inventory");
+
+        // SCHEMA: Sales (Operações Comerciais e Compras)
+        modelBuilder.Entity<SalesSession>().ToTable("SalesSessions", "Sales");
+        modelBuilder.Entity<CartItem>().ToTable("CartItems", "Sales");
+        modelBuilder.Entity<PurchaseOrder>().ToTable("PurchaseOrders", "Sales");
+        modelBuilder.Entity<PurchaseOrderItem>().ToTable("PurchaseOrdersItems", "Sales");
+
+        #endregion
 
         #region Configurações de JSON e Conversores
         var jsonOptions = new JsonSerializerOptions
@@ -148,6 +171,15 @@ public class InventoryDbContext : DbContext
                 .HasForeignKey(sti => sti.ProductId);
         });
 
+        modelBuilder.Entity<Product>()
+            .HasMany(p => p.Suppliers)
+            .WithMany(s => s.Products)
+            .UsingEntity<Dictionary<string, object>>(
+                "ProductSupplier", // Nome da tabela que será criada no banco
+                j => j.HasOne<Supplier>().WithMany().HasForeignKey("SupplierId"),
+                j => j.HasOne<Product>().WithMany().HasForeignKey("ProductId")
+            );
+
         #region Conversão de Enums para String
 
         // 1. Usuários: Armazena "Gerente", "Administrador", etc.
@@ -200,8 +232,13 @@ public class InventoryDbContext : DbContext
         modelBuilder.Entity<StoreInventory>().Property(si => si.LocalPrice).HasPrecision(18, 2);
 
         // Compras e Custos (Novas Tabelas)
-        modelBuilder.Entity<PurchaseOrder>().Property(p => p.TotalCost).HasPrecision(18, 2);
         modelBuilder.Entity<PurchaseOrderItem>().Property(p => p.UnitCost).HasPrecision(18, 2);
+        modelBuilder.Entity<PurchaseOrder>().Property(p => p.TotalCost).HasPrecision(18, 2);
+        modelBuilder.Entity<PurchaseOrder>().Property(p => p.ServiceFee).HasPrecision(18, 2);
+        modelBuilder.Entity<PurchaseOrder>().Property(p => p.TaxAmount).HasPrecision(18, 2);
+        modelBuilder.Entity<PurchaseOrder>().Property(p => p.ShippingCost).HasPrecision(18, 2);
         modelBuilder.Entity<StockBatch>().Property(p => p.UnitCost).HasPrecision(18, 2);
+        modelBuilder.Entity<Supplier>().Property(s => s.BaseOrderFee).HasPrecision(18, 2);
+        modelBuilder.Entity<Supplier>().Property(s => s.DefaultShippingFee).HasPrecision(18, 2);
     }
 }

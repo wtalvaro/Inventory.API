@@ -7,10 +7,8 @@ public class Supplier
     public string TaxId { get; set; } = string.Empty; // CNPJ ou similar
     public string ContactEmail { get; set; } = string.Empty;
     public string? Phone { get; set; }
-
-    // Relacionamento com produtos que ele fornece
     public List<Product> Products { get; set; } = new();
-
-    // ADICIONE ESTA LINHA: Relacionamento para o histórico de compras
     public List<PurchaseOrder> PurchaseOrders { get; set; } = new();
+    public decimal BaseOrderFee { get; set; }
+    public decimal DefaultShippingFee { get; set; }
 }

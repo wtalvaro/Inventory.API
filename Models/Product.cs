@@ -34,4 +34,5 @@ public class Product
     public virtual ICollection<SalesStep> SalesTimeline { get; set; } = new List<SalesStep>();
     public string[] RelatedSkus { get; set; } = Array.Empty<string>();
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public List<Supplier> Suppliers { get; set; } = new();
 }

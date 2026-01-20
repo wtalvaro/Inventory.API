@@ -3,6 +3,7 @@ using System;
 using Inventory.API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Inventory.API.Migrations
 {
     [DbContext(typeof(InventoryDbContext))]
-    partial class InventoryDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260119193609_AddProductSupplierTable")]
+    partial class AddProductSupplierTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -46,7 +49,7 @@ namespace Inventory.API.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("CartItems", "Sales");
+                    b.ToTable("CartItems");
                 });
 
             modelBuilder.Entity("Inventory.API.Models.InventoryLog", b =>
@@ -91,7 +94,7 @@ namespace Inventory.API.Migrations
 
                     b.HasIndex("StoreId");
 
-                    b.ToTable("InventoryLogs", "Inventory");
+                    b.ToTable("InventoryLogs");
                 });
 
             modelBuilder.Entity("Inventory.API.Models.Product", b =>
@@ -147,7 +150,7 @@ namespace Inventory.API.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Products", "Catalog");
+                    b.ToTable("Products");
                 });
 
             modelBuilder.Entity("Inventory.API.Models.PurchaseOrder", b =>
@@ -165,10 +168,6 @@ namespace Inventory.API.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<decimal>("ServiceFee")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
-
-                    b.Property<decimal>("ShippingCost")
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
 
@@ -197,7 +196,7 @@ namespace Inventory.API.Migrations
 
                     b.HasIndex("SupplierId");
 
-                    b.ToTable("PurchaseOrders", "Sales");
+                    b.ToTable("PurchaseOrders");
                 });
 
             modelBuilder.Entity("Inventory.API.Models.PurchaseOrderItem", b =>
@@ -227,7 +226,7 @@ namespace Inventory.API.Migrations
 
                     b.HasIndex("PurchaseOrderId");
 
-                    b.ToTable("PurchaseOrdersItems", "Sales");
+                    b.ToTable("PurchaseOrdersItems");
                 });
 
             modelBuilder.Entity("Inventory.API.Models.SalesSession", b =>
@@ -270,7 +269,7 @@ namespace Inventory.API.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("SalesSessions", "Sales");
+                    b.ToTable("SalesSessions");
                 });
 
             modelBuilder.Entity("Inventory.API.Models.SalesStep", b =>
@@ -312,7 +311,7 @@ namespace Inventory.API.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("SalesSteps", "Catalog");
+                    b.ToTable("SalesSteps");
                 });
 
             modelBuilder.Entity("Inventory.API.Models.Seller", b =>
@@ -343,7 +342,7 @@ namespace Inventory.API.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Sellers", "Identity");
+                    b.ToTable("Sellers");
                 });
 
             modelBuilder.Entity("Inventory.API.Models.StockBatch", b =>
@@ -387,7 +386,7 @@ namespace Inventory.API.Migrations
 
                     b.HasIndex("StoreId");
 
-                    b.ToTable("StockBatches", "Inventory");
+                    b.ToTable("StockBatches");
                 });
 
             modelBuilder.Entity("Inventory.API.Models.StockTransfer", b =>
@@ -430,7 +429,7 @@ namespace Inventory.API.Migrations
 
                     b.HasIndex("OriginStoreId");
 
-                    b.ToTable("StockTransfers", "Inventory");
+                    b.ToTable("StockTransfers");
                 });
 
             modelBuilder.Entity("Inventory.API.Models.StockTransferItem", b =>
@@ -462,7 +461,7 @@ namespace Inventory.API.Migrations
 
                     b.HasIndex("StockTransferId");
 
-                    b.ToTable("StockTransferItems", "Inventory");
+                    b.ToTable("StockTransferItems");
                 });
 
             modelBuilder.Entity("Inventory.API.Models.Store", b =>
@@ -486,7 +485,7 @@ namespace Inventory.API.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Stores", "Inventory");
+                    b.ToTable("Stores");
                 });
 
             modelBuilder.Entity("Inventory.API.Models.StoreInventory", b =>
@@ -542,7 +541,7 @@ namespace Inventory.API.Migrations
                     b.HasIndex("StoreId", "SKU")
                         .IsUnique();
 
-                    b.ToTable("StoreInventories", "Inventory");
+                    b.ToTable("StoreInventories");
                 });
 
             modelBuilder.Entity("Inventory.API.Models.Supplier", b =>
@@ -561,10 +560,6 @@ namespace Inventory.API.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<decimal>("DefaultShippingFee")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
@@ -581,7 +576,7 @@ namespace Inventory.API.Migrations
                     b.HasIndex("TaxId")
                         .IsUnique();
 
-                    b.ToTable("Suppliers", "Catalog");
+                    b.ToTable("Suppliers");
                 });
 
             modelBuilder.Entity("Inventory.API.Models.User", b =>
@@ -621,7 +616,7 @@ namespace Inventory.API.Migrations
                     b.HasIndex("Username")
                         .IsUnique();
 
-                    b.ToTable("Users", "Identity");
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("ProductSupplier", b =>
@@ -636,7 +631,7 @@ namespace Inventory.API.Migrations
 
                     b.HasIndex("SupplierId");
 
-                    b.ToTable("ProductSupplier", "Catalog");
+                    b.ToTable("ProductSupplier");
                 });
 
             modelBuilder.Entity("Inventory.API.Models.InventoryLog", b =>
