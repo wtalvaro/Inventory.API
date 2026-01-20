@@ -1,5 +1,6 @@
 using Inventory.API.Data;
 using Inventory.API.Models;
+using Inventory.API.Models.Enums;
 using Inventory.API.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -54,13 +55,18 @@ public class StoreInventoryService : IStoreInventoryService
         var item = await _context.StoreInventories.FindAsync(inventoryId);
         if (item == null) return null;
 
+        // O DELTA representa a variação real do estoque. 
+        // Essencial para relatórios de perdas, ganhos e acuradoria.
+        int delta = newQuantity - item.Quantity;
+
         // Registro de Auditoria (Log)
         var log = new InventoryLog
         {
             ProductId = item.ProductId,
             StoreId = item.StoreId,
-            QuantityChange = newQuantity - item.Quantity,
-            Type = "Ajuste Manual",
+            QuantityChange = delta,
+            // 3. Escolha automática do tipo baseado no sinal da mudança
+            Type = delta >= 0 ? MovementType.AdjustmentIn : MovementType.AdjustmentOut,
             Notes = $"Motivo: {reason}",
             CreatedAt = DateTime.UtcNow
         };

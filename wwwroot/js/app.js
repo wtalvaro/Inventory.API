@@ -1,5 +1,5 @@
 /**
- * APP.JS - O MAESTRO DA SPA
+ * APP.JS - O MAESTRO DA SPA (Refatorado)
  * Responsabilidade: Orquestrar módulos e expor funções globais para o HTML.
  */
 
@@ -9,11 +9,12 @@ import { Inventory } from './modules/inventory.js';
 import { Session } from './modules/session.js';
 import { SalesCoach } from './modules/salesCoach.js';
 import { Telemetry } from './modules/telemetry.js';
+import { Purchase } from './modules/purchase.js'; // Novo módulo de compras
 
 // --- 1. EXPOSIÇÃO PARA O ESCOPO GLOBAL (window) ---
-// Necessário para que atributos 'onclick' e 'onchange' no HTML funcionem com módulos.
+// Necessário para manter a compatibilidade com 'onclick' e 'onchange' do HTML
 window.showSection = (sectionId) => {
-    // 1. Esconde todas as secções
+    // 1. Esconde todas as secções usando o padrão de ID 'sec-'
     document.querySelectorAll('main section').forEach(s => s.classList.add('hidden'));
 
     // 2. Mostra a secção selecionada
@@ -22,67 +23,83 @@ window.showSection = (sectionId) => {
         target.classList.remove('hidden');
     }
 
-    // 3. Se for telemetria, carrega os dados automaticamente
-    if (sectionId === 'telemetry') {
-        Telemetry.load();
+    // 3. Inicialização condicional por seção
+    switch (sectionId) {
+        case 'telemetry':
+            Telemetry.load();
+            break;
+        case 'purchase':
+            // Só carrega compras se for Admin ou Coordenador
+            if (['Administrador', 'Coordenador'].includes(ServerState.role)) {
+                Purchase.load();
+            }
+            break;
+        case 'inventory':
+            Inventory.load();
+            break;
     }
 };
+
+// Atalhos globais para componentes específicos
+window.UI = UI;
+window.Inventory = Inventory;
+window.Purchase = Purchase;
+window.SalesCoach = SalesCoach;
+window.Telemetry = Telemetry;
+
+// Funções de ação rápida
 window.loadInventory = () => Inventory.load();
-
 window.handleStockUpdate = (id, change) => Inventory.handleUpdate(id, change);
-
 window.logout = () => Api.logout();
+window.searchInventory = () => Inventory.render();
+window.loadTelemetry = () => Telemetry.load();
 
 /**
- * Ativa o Coach de Vendas a partir de um clique na tabela de inventário
+ * Ativa o Coach de Vendas a partir da tabela de inventário
  */
 window.activateCoach = (productId, name, sku) => {
-    UI.showSection('coach');
+    window.showSection('coach');
     SalesCoach.init(productId, name, sku);
 };
-
-/**
- * Função de busca (Pode ser ligada a um evento 'oninput' no campo de pesquisa)
- */
-window.searchInventory = () => Inventory.render();
-
-window.loadTelemetry = () => Telemetry.load();
 
 // --- 2. INICIALIZAÇÃO DO SISTEMA ---
 
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Remove o loading
+    // 1. Tratamento do Loading Overlay
     const overlay = document.getElementById('loading-overlay');
     if (overlay) {
         overlay.classList.add('hidden');
         overlay.style.display = 'none';
     }
 
-    // 2. Tenta detectar a autenticação de forma robusta
-    // Verificamos o ServerState e também se o elemento principal da App existe na página
+    // 2. Detecção de Autenticação e Estado Inicial
     const isLogged = window.ServerState?.isAuthenticated === true || !!document.getElementById('main-app');
 
     if (isLogged) {
-        console.log("RetailPro SPA: Dashboard detectado. Inicializando...");
+        console.log("🚀 RetailPro SPA: Dashboard detectado. Inicializando...");
+
         Session.init();
+
+        // Carregamento inicial baseado na seção padrão (Inventário)
         Inventory.load();
-        UI.showSection('inventory');
+        window.showSection('inventory');
+
+        // Automação para o Coordenador (Carregamento de fundo)
+        if (ServerState.role === 'Coordenador') {
+            Telemetry.load();
+        }
     } else {
-        console.log("RetailPro SPA: Tela de autenticação detectada.");
+        console.log("🔑 RetailPro SPA: Tela de autenticação detectada.");
     }
 
-    if (ServerState.role === 'Coordenador') {
-        Telemetry.load(); // Carrega os dados de rede automaticamente para o boss
-    }
-
-    // Filtro em tempo real na tabela de inventário
+    // 3. Event Listeners de UI
     const searchInput = document.getElementById('inventory-search');
     if (searchInput) {
         searchInput.addEventListener('input', () => Inventory.render());
     }
 });
 
-// Tratamento de erros globais de promessas (Opcional, mas recomendado)
+// Tratamento global de falhas de rede/API
 window.addEventListener('unhandledrejection', event => {
-    console.error('Erro de API não tratado:', event.reason);
+    console.error('🔴 Erro de API não tratado:', event.reason);
 });

@@ -44,6 +44,18 @@
         </button>
     }
 
+    @if (userRole == "Administrador" || userRole == "Coordenador")
+    {
+        <button onclick="showSection('purchase')"
+            class="nav-link p-3 text-left hover:bg-orange-50 text-gray-700 rounded-xl flex items-center gap-3 transition-all group active:scale-95">
+            <div
+                class="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center group-hover:bg-orange-600 transition-colors">
+                <i class="fas fa-shopping-cart text-orange-600 group-hover:text-white"></i>
+            </div>
+            <span class="font-semibold text-sm">Ordens de Compra</span>
+        </button>
+    }
+
     <div class="flex-1"></div>
 
     <div class="p-4 bg-gray-50 rounded-2xl mt-auto">

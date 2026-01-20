@@ -214,6 +214,13 @@ public class InventoryDbContext : DbContext
                   .HasMaxLength(30);
         });
 
+        modelBuilder.Entity<InventoryLog>(entity =>
+        {
+            entity.Property(l => l.Type)
+                  .HasConversion<string>() // Salva "Sale" em vez de 1
+                  .HasMaxLength(50);
+        });
+
         #endregion
 
         // Aplicar Precisão Decimal Centralizada

@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Inventory.API.Models.Enums;
 
 namespace Inventory.API.Models;
 
@@ -28,7 +29,7 @@ public class InventoryLog
     public int QuantityChange { get; set; } // Ex: +10 (entrada), -2 (venda)
 
     [Required]
-    public string Type { get; set; } = string.Empty; // Ex: "Ajuste Manual", "Venda", "Recebimento"
+    public MovementType Type { get; set; } // Ex: "Ajuste Manual", "Venda", "Recebimento"
 
     public string Notes { get; set; } = string.Empty;
 

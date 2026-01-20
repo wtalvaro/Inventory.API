@@ -15,6 +15,13 @@ public class PurchaseOrdersController : ControllerBase
         _orderService = orderService;
     }
 
+    [HttpGet]
+    public async Task<IActionResult> GetAll()
+    {
+        var orders = await _orderService.GetAllOrdersAsync();
+        return Ok(orders);
+    }
+
     [HttpPost]
     public async Task<IActionResult> Create(PurchaseOrder order)
     {

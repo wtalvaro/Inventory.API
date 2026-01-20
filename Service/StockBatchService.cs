@@ -1,5 +1,6 @@
 using Inventory.API.Data;
 using Inventory.API.Models;
+using Inventory.API.Models.Enums;
 using Inventory.API.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -72,5 +73,67 @@ public class StockBatchService : IStockBatchService
         batch.CurrentQuantity = 0;
         await _context.SaveChangesAsync();
         return true;
+    }
+
+    public async Task<bool> RecordMovementAsync(int productId, int storeId, int quantity, MovementType type, string reason)
+    {
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            var product = await _context.Products.FindAsync(productId);
+            var inventory = await _context.StoreInventories
+                .FirstOrDefaultAsync(si => si.ProductId == productId && si.StoreId == storeId);
+
+            if (product == null || inventory == null) return false;
+
+            // 1. CRIAR O LOG (O "Cartório" da movimentação - Imutável)
+            var log = new InventoryLog
+            {
+                ProductId = productId,
+                StoreId = storeId,
+                SKU = inventory.SKU,
+                ProductName = product.Name,
+                QuantityChange = quantity,
+                Type = type,
+                Notes = reason,
+                CreatedAt = DateTime.UtcNow
+            };
+            _context.InventoryLogs.Add(log);
+
+            // 2. LÓGICA ERP: Se for Saída (quantidade negativa), fazemos a baixa FIFO nos Lotes
+            if (quantity < 0)
+            {
+                int toReduce = Math.Abs(quantity);
+                var batches = await _context.StockBatches
+                    .Where(b => b.ProductId == productId && b.StoreId == storeId && b.CurrentQuantity > 0)
+                    .OrderBy(b => b.EntryDate) // Primeiro que entra, primeiro que sai
+                    .ToListAsync();
+
+                foreach (var batch in batches)
+                {
+                    if (toReduce <= 0) break;
+
+                    int take = Math.Min(batch.CurrentQuantity, toReduce);
+                    batch.CurrentQuantity -= take;
+                    toReduce -= take;
+                }
+
+                if (toReduce > 0) throw new Exception("Estoque insuficiente nos lotes para esta saída.");
+            }
+
+            // 3. ATUALIZAR O SALDO ESPELHO (StoreInventory)
+            // O saldo aqui é apenas um reflexo consolidado dos lotes e logs
+            inventory.Quantity += quantity;
+            inventory.LastUpdated = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+            return true;
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            return false;
+        }
     }
 }

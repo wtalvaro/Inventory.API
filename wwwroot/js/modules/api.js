@@ -1,96 +1,142 @@
 /**
- * API.JS - Módulo de Comunicação Centralizado
+ * API.JS - Módulo de Comunicação Centralizado do RetailPro
+ * Responsabilidade: Abstrair chamadas HTTP e tratar respostas globais.
  */
+
 export const Api = {
-    // 1. INVENTÁRIO (Alinhado com StoreInventoryController)
-    async getInventory(storeId) {
+
+    // --- NÚCLEO DE REQUISIÇÃO (Private-like helper) ---
+    async _request(url, options = {}) {
+        const defaultHeaders = { 'Content-Type': 'application/json' };
+        options.headers = { ...defaultHeaders, ...options.headers };
+
         try {
-            // O Backend espera: /api/inventory/store/{storeId}
-            const res = await fetch(`/api/StoreInventory/catalog/${storeId}`);
+            const res = await fetch(url, options);
 
-            if (res.status === 401) return this.handleUnauthorized();
-
-            // SEGURANÇA: Se não for 200 OK, não tenta ler JSON
-            if (!res.ok) {
-                console.warn(`API retornou erro ${res.status} para a loja ${storeId}`);
-                return [];
+            // Tratamento global de Autenticação
+            if (res.status === 401) {
+                this.handleUnauthorized();
+                return null;
             }
 
+            if (!res.ok) {
+                const errorText = await res.text();
+                console.error(`🔴 Erro API [${res.status}] em ${url}:`, errorText);
+                return null;
+            }
+
+            // Retorna null se não houver conteúdo (NoContent)
+            if (res.status === 204) return true;
+
             return await res.json();
         } catch (err) {
-            console.error("Erro ao buscar inventário:", err);
-            return [];
+            console.error(`🔴 Falha de Conexão em ${url}:`, err);
+            return null;
         }
     },
 
-    // Ajustado para usar o endpoint [HttpPut("item/{id}")] do seu Controller
-    async updateStock(id, currentQuantity, change) {
-        try {
-            const newQuantity = currentQuantity + change;
-
-            // O seu Controller espera um objeto StoreInventory no Body
-            const res = await fetch(`/api/StoreInventory/${id}/adjust?quantity=${newQuantity}&reason=${encodeURIComponent(reason)}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ quantity: newQuantity })
-            });
-
-            if (res.status === 401) return this.handleUnauthorized();
-            return res.ok;
-        } catch (err) {
-            console.error("Erro ao atualizar estoque:", err);
-            return false;
-        }
+    // --- 1. INVENTÁRIO (Logística Local) ---
+    async getInventory(storeId) {
+        return await this._request(`/api/StoreInventory/catalog/${storeId}`) || [];
     },
 
-    // 2. COACH DE VENDAS (Alinhado com SalesStepsController)
+    async updateStock(id, newQuantity, reason) {
+        // Endpoint: [HttpPut("StoreInventory/{id}/adjust")]
+        const url = `/api/StoreInventory/${id}/adjust?quantity=${newQuantity}&reason=${encodeURIComponent(reason)}`;
+        const result = await this._request(url, {
+            method: 'PUT',
+            body: JSON.stringify({ quantity: newQuantity })
+        });
+        return result !== null;
+    },
+
+    // --- 2. COMPRAS (Purchase Orders - ERP Core) ---
+    async getPurchaseOrders() {
+        return await this._request('/api/PurchaseOrders') || [];
+    },
+
+    async getPurchaseOrderById(id) {
+        return await this._request(`/api/PurchaseOrders/${id}`);
+    },
+
+    async createPurchaseOrder(data) {
+        return await this._request('/api/PurchaseOrders', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    },
+
+    async receivePurchaseOrder(id) {
+        const res = await this._request(`/api/PurchaseOrders/${id}/receive`, { method: 'POST' });
+        return res !== null;
+    },
+
+    // --- 3. ITENS DA ORDEM DE COMPRA ---
+    async addOrderItem(item) {
+        return await this._request('/api/PurchaseOrderItems', {
+            method: 'POST',
+            body: JSON.stringify(item)
+        });
+    },
+
+    async deleteOrderItem(id) {
+        const res = await this._request(`/api/PurchaseOrderItems/${id}`, { method: 'DELETE' });
+        return res !== null;
+    },
+
+    // --- 4. INTELIGÊNCIA E AUXILIARES ---
     async getSalesCoachTimeline(productId) {
-        try {
-            // Ajustado para a rota correta do seu Controller
-            const res = await fetch(`/api/SalesSteps/coach/${productId}`);
-            if (!res.ok) return [];
-            return await res.json();
-        } catch (err) {
-            return [];
-        }
+        return await this._request(`/api/SalesSteps/coach/${productId}`) || [];
     },
 
-    // 3. TELEMETRIA (Mock de segurança para evitar erro 404 no console)
+    async searchProducts(query) {
+        if (!query || query.length < 2) return [];
+        return await this._request(`/api/Products/search?q=${encodeURIComponent(query)}`) || [];
+    },
+
+    async getSuppliers() {
+        return await this._request('/api/Suppliers') || [];
+    },
+
+    async getStores() {
+        // Útil para o Coordenador escolher o destino da compra
+        return await this._request('/api/Stores') || [];
+    },
+
+    // --- 5. TELEMETRIA (Mock/Previsão de Implementação) ---
     async getTelemetryData() {
-        console.info("Telemetria: Endpoint desativado no JS. Usando dados locais.");
-        return this.getMockTelemetryData();
+        // Atualmente simulado para não gerar erros de console enquanto o serviço é construído
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                resolve({
+                    totalSales: 45250.80,
+                    activeSessions: 12,
+                    outOfStockCount: 5,
+                    averageTicket: 185.50,
+                    storePerformances: [
+                        { storeName: "Centro-RJ", stockLevel: 1250, salesGrowth: 15 },
+                        { storeName: "Shopping Paulista", stockLevel: 840, salesGrowth: -5 },
+                        { storeName: "Filial Curitiba", stockLevel: 2100, salesGrowth: 8 },
+                        { storeName: "Recife Antigo", stockLevel: 450, salesGrowth: 12 }
+                    ]
+                });
+            }, 300);
+        });
     },
 
-    getMockTelemetryData() {
-        return {
-            totalSales: 45250.80,
-            activeSessions: 12,
-            outOfStockCount: 5,
-            averageTicket: 185.50,
-            storePerformances: [
-                { storeName: "Centro-RJ", stockLevel: 1250, salesGrowth: 15 },
-                { storeName: "Shopping Paulista", stockLevel: 840, salesGrowth: -5 },
-                { storeName: "Filial Curitiba", stockLevel: 2100, salesGrowth: 8 },
-                { storeName: "Recife Antigo", stockLevel: 450, salesGrowth: 12 }
-            ]
-        };
-    },
-
+    // --- 6. SESSÃO E SEGURANÇA ---
     async logout() {
         try {
-            // Chama o servidor para invalidar o cookie
             await fetch('/api/auth/logout', { method: 'POST' });
         } finally {
-            // Limpa estados locais se houver (localStorage, sessionStorage)
             sessionStorage.clear();
-            localStorage.removeItem('RetailPro_LastUser');
-
-            // Redireciona e força um reload completo
+            localStorage.clear();
             window.location.replace('/');
         }
     },
 
     handleUnauthorized() {
+        console.warn("Sessão expirada. Redirecionando...");
         window.location.href = '/';
     }
 };
